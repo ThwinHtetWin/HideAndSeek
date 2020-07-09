@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import os
-from tqdm import tqdm
 from cryptography.fernet import Fernet
 
 BGreen="\033[1;32m"       # Green
