@@ -1,31 +1,75 @@
-import cv2
-import numpy as np
 import os
+import cv2
+import magic
+import numpy as np
+from PIL import Image
 from cryptography.fernet import Fernet
 
-Green="\033[1;32m"       # Green
-Red="\u001b[31m"         # Red
-reset="\u001b[0m"        # Default 
+Green="\033[1;32m"       
+Red="\u001b[31m"         
+Yellow="\033[0;33m"
+reset="\u001b[0m"       
 
 def main(): 
 
-    print("""
-    {c}H I D E & S E E K - Presented By Group-2
-    ----------------------------------------
-    """.format(c=Green))
+    print(f"""
+    {Green}H I D E & S E E K 
+    ------------------------
+    """)
 
-    print("""
-{g}[ HIDE ]{reset}  Enter ( 1 ) to Hide the data in the image
-{g}[ SEEK ]{reset}  Enter ( 2 ) to Reveal the data from the encoded image\n""".format(g=Green,reset=reset))
+    print(f"{Green}[ HIDE ]{reset}  Enter ( 1 ) to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter ( 2 ) to Reveal the data from the encoded image\n")
+
     a = int(input("Hide/Seek : "))
     if(a==1):  
         img_enc()
     elif(a==2):
         img_dec()
     else:
-        print("{r}[ERROR]{reset} Please enter 1 or 2.".format(r=Red,reset=reset))
+        print(f"{Red}[ERROR]{reset} Please enter 1 or 2.")
         exit()
 
+def checkpoint(rawfile):
+
+    global final_img_name
+
+    is_exist=os.path.exists(rawfile)
+    if is_exist==True:
+
+        print(f"{Green}[RESULT]{reset} Input file [{Green} {rawfile} {reset}] exists.")
+
+        file_type = magic.from_file(rawfile,mime=True)
+
+        if file_type == "image/png":
+            print(f"{Green}[RESULT]{reset} This is PNG image file.")
+
+            handle_img=Image.open(rawfile).convert("RGB")
+            filename=rawfile.split(".")[0]
+            handle_img.save(f"{filename}.png","png")
+            handle_img.close()
+            final_img_name=f"{filename}.png"
+
+        elif file_type == "image/jpg" or "image/jpeg":
+            convert=input(f"{Yellow}[!]{reset} This is JPG/JPEG image file.Do u want to convert this JPG/JPEG to PNG file? [{Yellow} y/n {reset}] : ").lower()
+            
+            if convert=="y":
+                handle_img=Image.open(rawfile).convert("RGB")
+                filename=rawfile.split(".")[0]
+                handle_img.save(f"{filename}.png","png")
+                handle_img.close()
+                final_img_name=f"{filename}.png"
+
+                print(f"{Green}[RESULT]{reset} Created {final_img_name}")
+
+            elif convert=="n":
+                print("Goodbye.")
+                exit()
+        else:
+            print("[{}!{}] Sorry.We only accept PNG and JPG/JPEG file.")
+            exit()
+    else:
+        print("File doesn't exist.")
+        exit()
+        return final_img_name
 
 def to_bin(data):
 
@@ -36,7 +80,7 @@ def to_bin(data):
     elif isinstance(data, int) or isinstance(data, np.uint8):
         return format(data, "08b")
     else:
-        raise TypeError("{r}[ERROR]{reset} Type not supported.".format(r=Red,reset=reset))
+        raise TypeError(f"{Red}[ERROR]{reset} Type not supported.")
 
 def encode(image_name, secret_data):
 
@@ -45,7 +89,7 @@ def encode(image_name, secret_data):
     # maximum bytes to encode
     n_bytes = image.shape[0] * image.shape[1] * 3 // 8
     if len(secret_data) > n_bytes:
-        raise ValueError("{r}[ERROR]{reset} Insufficient bytes, need bigger image or less data.".format(r=Red,reset=reset))
+        raise ValueError("{Red}[ERROR]{reset} Insufficient bytes, need bigger image or less data.")
     # add stop sign
     clean_encoded_msg += "stop"
     data_index = 0
@@ -70,7 +114,7 @@ def encode(image_name, secret_data):
     return image
 
 def decode(image_name):
-    print("[{g}RESULT{reset}] Please wait...\n[{g}RESULT{reset}] Decoding image to retrieve the encrypted data...".format(g=Green,reset=reset))
+    print(f"[{Green}RESULT{reset}] Please wait...\n[{Green}RESULT{reset}] Decoding image to retrieve the encrypted data...")
     image = cv2.imread(image_name)
     binary_data = ""
     for row in image:
@@ -90,45 +134,55 @@ def decode(image_name):
             break
     return decoded_data[:-4]
 
-
 def img_enc():
     global clean_encoded_msg
-    key=Fernet.generate_key()
-    clean_key = key.decode('utf-8')
-    print("-"*60)
-    print("{g}Access key : ".format(g=Green),reset,clean_key)
-    print("[{g}Note{reset}] Keep this key in a safe place ! {g}[!]".format(reset=reset,g=Green))
-    print("-"*60,reset)
-    fernet=Fernet(key)
 
-    secret_data = input("[{g}TODO{reset}]   Enter your message(data) : ".format(g=Green,reset=reset)).encode("utf-8")
-    encoded=fernet.encrypt(secret_data)
-    clean_encoded_msg = encoded.decode('utf-8')
-    print("[{g}RESULT{reset}] Encrypted data           :".format(g=Green,reset=reset),clean_encoded_msg)
-    input_image = input("[{g}TODO{reset}]   Enter your image         : ".format(g=Green,reset=reset))
+    print(f"{Green}[ Initial Checkpoint ]{reset}\n")
+    rawfile = input(f"{Yellow}[TODO]{reset}   Enter Image : ")
+    checkpoint(rawfile)
         # split the absolute path and the file
-    path, file = os.path.split(input_image)
+    path, file = os.path.split(final_img_name)
         # split the filename and the image extension
     filename, ext = file.split(".")
     output_image = os.path.join(path, f"{filename}_encoded.{ext}")
-    encoded_image = encode(image_name=input_image, secret_data=secret_data)       
+
+    key=Fernet.generate_key()
+    clean_key = key.decode('utf-8')
+
+    print("-"*60,
+          f"\n{Green}Access key : {reset}{clean_key}")
+    f=open("access.key","w")
+    f.write(clean_key)
+    f.write("\n[!] Keep this key in a safe place.\n")
+    f.close()
+    print(f"[{Green}RESULT{reset}] Access Key is saved as [{Green} access.key {reset}] !")
+    print("-"*60)
+
+    fernet=Fernet(key)
+
+    secret_data = input(f"[{Yellow}TODO{reset}]   Enter your message(data) : ").encode("utf-8")
+    encoded=fernet.encrypt(secret_data)
+    clean_encoded_msg = encoded.decode('utf-8')
+    print(f"[{Green}RESULT{reset}] Encrypted data           : {clean_encoded_msg}")
+    
+    encoded_image = encode(image_name=final_img_name, secret_data=secret_data)       
     cv2.imwrite(output_image, encoded_image)
-    print("[{g}RESULT{reset}] Saved encoded image      :".format(g=Green,reset=reset),output_image,'\n')
+    print(f"[{Green}RESULT{reset}] Saved encoded image      : {output_image}\n")
 
 def img_dec():
     print("-"*60)
-    to_decode = input("[{g}TODO{reset}]   Enter your encoded image : ".format(g=Green,reset=reset))
+    to_decode = input(f"[{Yellow}TODO{reset}]   Enter your encoded image : ")
 
     decoded_data = decode(to_decode)
     print("-"*60)
-    print("[{g}RESULT{reset}] Decoded data     :".format(g=Green,reset=reset),decoded_data)
-    key=input("[{g}TODO{reset}]   Enter access key : ".format(g=Green,reset=reset)).encode()
+    print(f"[{Green}RESULT{reset}] Decoded data     : {decoded_data}")
+    key=input(f"[{Yellow}TODO{reset}]   Enter access key : ").encode()
     f=Fernet(key)
 
     decoded_data=decoded_data.encode()
     decrypt = f.decrypt(decoded_data)
     clean_decrypt = decrypt.decode('utf-8')
-    print("[{g}RESULT{reset}] Decrypted data   :".format(g=Green,reset=reset),clean_decrypt)
+    print(f"[{Green}RESULT{reset}] Decrypted data   : {clean_decrypt}")
 
 #Here we goooo!!!
 main()
