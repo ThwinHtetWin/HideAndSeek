@@ -2,8 +2,10 @@ import os
 import cv2
 import magic
 import numpy as np
+from tqdm import trange,tqdm
 from PIL import Image
 from cryptography.fernet import Fernet
+from time import sleep
 
 Green="\033[1;32m"       
 Red="\u001b[31m"         
@@ -13,14 +15,14 @@ reset="\u001b[0m"
 def main(): 
 
     print(f"""
-    {Green}H I D E & S E E K 
+    {Yellow}H I D E & S E E K 
     ------------------------
     """)
 
     print(f"{Green}[ HIDE ]{reset}  Enter [ 1 ] to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter [ 2 ] to Reveal the data from the encoded image\n")
 
-    a = int(input("Hide/Seek : "))
-    if(a==1):  
+    a = int(input("[ Hide/Seek ] : "))
+    if(a==1): 
         img_enc()
     elif(a==2):
         img_dec()
@@ -47,7 +49,7 @@ def checkpoint(rawfile):
             handle_img.close()
             final_img_name=f"{filename}.png"
 
-        elif file_type == "image/jpg" or "image/jpeg":
+        elif file_type == "image/jpg" or file_type == "image/jpeg":
             convert=input(f"{Yellow}[!]{reset} This is JPG/JPEG image file.Do u want to convert this JPG/JPEG to PNG file? [{Yellow} y/n {reset}] : ").lower()
             
             if convert=="y":
@@ -63,12 +65,12 @@ def checkpoint(rawfile):
                 print("Goodbye.")
                 exit()
         else:
-            print("[{}!{}] Sorry.We only accept PNG and JPG/JPEG file.")
+            print(f"[{Red}RESULT{reset}] Sorry.We only accept PNG and JPG/JPEG file.")
             exit()
     else:
-        print("File doesn't exist.")
+        print(f"{Red}[RESULT{reset}] File doesn't exist.")
         exit()
-
+        
 def to_bin(data):
 
     if isinstance(data, str):
@@ -170,6 +172,12 @@ def img_enc():
 def img_dec():
     print("-"*60)
     to_decode = input(f"[{Yellow}TODO{reset}]   Enter your encoded image : ")
+    is_exist=os.path.exists(to_decode)
+    if is_exist==True:
+        pass
+    else:
+        print(f"{Red}[RESULT]{reset} File doesn't exist.")
+        exit()
 
     decoded_data = decode(to_decode)
     print("-"*60)
