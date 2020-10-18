@@ -17,7 +17,7 @@ def main():
     ------------------------
     """)
 
-    print(f"{Green}[ HIDE ]{reset}  Enter ( 1 ) to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter ( 2 ) to Reveal the data from the encoded image\n")
+    print(f"{Green}[ HIDE ]{reset}  Enter [ 1 ] to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter [ 2 ] to Reveal the data from the encoded image\n")
 
     a = int(input("Hide/Seek : "))
     if(a==1):  
@@ -31,7 +31,6 @@ def main():
 def checkpoint(rawfile):
 
     global final_img_name
-
     is_exist=os.path.exists(rawfile)
     if is_exist==True:
 
@@ -69,7 +68,6 @@ def checkpoint(rawfile):
     else:
         print("File doesn't exist.")
         exit()
-        return final_img_name
 
 def to_bin(data):
 
@@ -114,7 +112,7 @@ def encode(image_name, secret_data):
     return image
 
 def decode(image_name):
-    print(f"[{Green}RESULT{reset}] Please wait...\n[{Green}RESULT{reset}] Decoding image to retrieve the encrypted data...")
+    print(f"[{Green}RESULT{reset}] Decoding image to retrieve the encrypted data.Please wait.")
     image = cv2.imread(image_name)
     binary_data = ""
     for row in image:
@@ -124,9 +122,9 @@ def decode(image_name):
             binary_data += g[-1]
             binary_data += b[-1]
 
+    print(f"{Green}[RESULT]{reset} Image is decoded as binary data.")
     # split by 8-bits
     all_bytes = [ binary_data[i: i+8] for i in range(0, len(binary_data), 8) ]
-    # convert from bits to characters
     decoded_data = ""
     for byte in all_bytes:
         decoded_data += chr(int(byte, 2))
@@ -138,9 +136,9 @@ def img_enc():
     global clean_encoded_msg
 
     print(f"{Green}[ Initial Checkpoint ]{reset}\n")
+
     rawfile = input(f"{Yellow}[TODO]{reset}   Enter Image : ")
     checkpoint(rawfile)
-        # split the absolute path and the file
     path, file = os.path.split(final_img_name)
         # split the filename and the image extension
     filename, ext = file.split(".")
@@ -182,7 +180,7 @@ def img_dec():
     decoded_data=decoded_data.encode()
     decrypt = f.decrypt(decoded_data)
     clean_decrypt = decrypt.decode('utf-8')
-    print(f"[{Green}RESULT{reset}] Decrypted data   : {clean_decrypt}")
+    print(f"[{Green}RESULT{reset}] Decrypted data   : {clean_decrypt}\n")
 
 #Here we goooo!!!
 main()
