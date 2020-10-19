@@ -2,33 +2,14 @@ import os
 import cv2
 import magic
 import numpy as np
-from tqdm import trange,tqdm
 from PIL import Image
 from cryptography.fernet import Fernet
-from time import sleep
 
 Green="\033[1;32m"       
 Red="\u001b[31m"         
 Yellow="\033[0;33m"
 reset="\u001b[0m"       
 
-def main(): 
-
-    print(f"""
-    {Yellow}H I D E & S E E K 
-    ------------------------
-    """)
-
-    print(f"{Green}[ HIDE ]{reset}  Enter [ 1 ] to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter [ 2 ] to Reveal the data from the encoded image\n")
-
-    a = int(input("[ Hide/Seek ] : "))
-    if(a==1): 
-        img_enc()
-    elif(a==2):
-        img_dec()
-    else:
-        print(f"{Red}[ERROR]{reset} Please enter 1 or 2.")
-        exit()
 
 def checkpoint(rawfile):
 
@@ -97,7 +78,7 @@ def encode(image_name, secret_data):
     data_len = len(binary_secret_data)
     
     for row in image:
-        for pixel in row:
+        for pixel in row: #type(pixel)=<class 'numpy.ndarray'>
             # convert RGB values to binary format
             r, g, b = to_bin(pixel)
             if data_index < data_len:
@@ -190,5 +171,22 @@ def img_dec():
     clean_decrypt = decrypt.decode('utf-8')
     print(f"[{Green}RESULT{reset}] Decrypted data   : {clean_decrypt}\n")
 
+def main(): 
+
+    print(f"""
+    {Yellow}H I D E & S E E K 
+    -----------------
+    """)
+
+    print(f"{Green}[ HIDE ]{reset}  Enter [ 1 ] to Hide the data in the image\n{Green}[ SEEK ]{reset}  Enter [ 2 ] to Reveal the data from the encoded image\n")
+
+    a = int(input("[ Hide/Seek ] : "))
+    if(a==1): 
+        img_enc()
+    elif(a==2):
+        img_dec()
+    else:
+        print(f"{Red}[ERROR]{reset} Please enter 1 or 2.")
+        exit()
 #Here we goooo!!!
 main()
