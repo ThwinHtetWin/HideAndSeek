@@ -1,3 +1,5 @@
 numpy
 cryptography
 opencv-python
+python-magic
+Pillow
