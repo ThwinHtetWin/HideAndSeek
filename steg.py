@@ -8,12 +8,9 @@ from cryptography.fernet import Fernet
 Green="\033[1;32m"       
 Red="\u001b[31m"         
 Yellow="\033[0;33m"
-reset="\u001b[0m"       
-
+reset="\u001b[0m"
 
 def checkpoint(rawfile):
-
-    global final_img_name
     is_exist=os.path.exists(rawfile)
     if is_exist==True:
 
@@ -51,6 +48,7 @@ def checkpoint(rawfile):
     else:
         print(f"{Red}[RESULT{reset}] File doesn't exist.")
         exit()
+    return final_img_name
         
 def to_bin(data):
 
@@ -105,7 +103,6 @@ def decode(image_name):
             binary_data += g[-1]
             binary_data += b[-1]
 
-    print(f"{Green}[RESULT]{reset} Image is decoded as binary data.")
     # split by 8-bits
     all_bytes = [ binary_data[i: i+8] for i in range(0, len(binary_data), 8) ]
     decoded_data = ""
@@ -118,10 +115,10 @@ def decode(image_name):
 def img_enc():
     global clean_encoded_msg
 
-    print(f"{Green}[ Initial Checkpoint ]{reset}\n")
+    print(f"\n{Green}[ Initial Checkpoint ]{reset}")
 
     rawfile = input(f"{Yellow}[TODO]{reset}   Enter Image : ")
-    checkpoint(rawfile)
+    final_img_name=checkpoint(rawfile)
     path, file = os.path.split(final_img_name)
         # split the filename and the image extension
     filename, ext = file.split(".")
