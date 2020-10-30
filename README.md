@@ -1,12 +1,7 @@
-# mini-program
-
-
-This program only works on Lossless-compression images like PNG.
-
 ## Installation
-```git clone https://github.com/ThwinHtetWin/LSB-steg.git```
+```git clone https://github.com/ThwinHtetWin/HideAndSeek.git```
 
-```cd LSB-steg/```
+```cd HideAndSeek/```
 
 ```pip3 install -r requirements.txt ```
 
