@@ -1,5 +1,4 @@
 import os
-import cv2
 import magic
 import numpy as np
 from PIL import Image
@@ -17,39 +16,40 @@ def checkpoint(rawfile):
 
         print(f"[ {Green}RESULT{reset} ] Input file [{Green} {rawfile} {reset}] exists.")
 
-        file_type = magic.from_file(rawfile,mime=True)
+        final_img = Image.open(rawfile)
 
-        if file_type == "image/png":
+        if final_img.format == "PNG":
             print(f"[ {Green}RESULT{reset} ] This is PNG image file.")
 
-            handle_img=Image.open(rawfile).convert("RGB")
-            filename=rawfile.split(".")[0]
-            handle_img.save(f"{filename}.png","png")
-            handle_img.close()
-            final_img_name=f"{filename}.png"
+            final_img_name = (os.path.splitext(rawfile)[0])+"_encoded.png"
+            final_img.save(final_img_name,'png')
+            final_img.close()
 
-        elif file_type == "image/jpg" or file_type == "image/jpeg":
-            convert=input(f"\n       {Yellow}[!]{reset} This is JPG/JPEG image file.Do u want to convert this JPG/JPEG to PNG file? [{Yellow} y/n {reset}] : ").lower()
-            print("")
-            
+        elif final_img.format == "JPG" or final_img.format == "JPEG":
+
+            convert=input(f"\n{Yellow}[!]{reset} This is JPG/JPEG image file.Do u want to convert this JPG/JPEG to PNG file? [{Yellow} y/n {reset}] : ").lower()
+                       
             if convert=="y":
-                handle_img=Image.open(rawfile).convert("RGB")
-                filename=rawfile.split(".")[0]
-                handle_img.save(f"{filename}.png","png")
-                handle_img.close()
-                final_img_name=f"{filename}.png"
+            	
+            	final_img_name = (os.path.splitext(rawfile)[0])+"_encoded.png"
+            	final_img.save(final_img_name,'png')
+            	final_img.close()
 
-                print(f"[ {Green}RESULT{reset} ] Created {final_img_name}")
+            	print(f"[ {Green}RESULT{reset} ] Created {final_img_name}")
 
             elif convert=="n":
-                print("Goodbye.")
-                exit()
+            	final_img.close()
+            	print("Goodbye.")
+            	exit()
         else:
             print(f"[ {Red}RESULT{reset} ] Sorry.We only accept PNG and JPG/JPEG file.")
             exit()
+
     else:
         print(f"[ {Red}RESULT{reset} ] File doesn't exist.")
+        
         exit()
+    print("Passed sanity check.")
     return final_img_name
         
 def to_bin(data):
@@ -65,7 +65,7 @@ def to_bin(data):
 
 def data_encryption():
      
-    generate = input(f"[ {Yellow}TODO{reset} ]   Generate new key (must generate new key if u are first time user) : [ {Yellow}y/n{reset} ]").lower()
+    generate = input(f"[ {Yellow}TODO{reset} ]   Generate new key (must generate new key if u are first time user) : [ {Yellow}y/n{reset} ] : ").lower()
     if generate == "y":
         key = Fernet.generate_key()
         clean_key = key.decode('utf-8')
@@ -100,23 +100,28 @@ def image_encode():
     print(f"\n{Green}-- Initial Checkpoint --{reset}\n")
 
     rawfile = input(f"[ {Yellow}TODO{reset} ]   Enter Image : ")
-    final_img_name=checkpoint(rawfile)
+    output_image=checkpoint(rawfile)
 
-    path, file = os.path.split(final_img_name)
-    filename, ext = file.split(".")
-    output_image = os.path.join(path, f"{filename}_encoded.{ext}")
+    image = Image.open(output_image)
+    handle_img = np.array(image)
 
-    image = cv2.imread(final_img_name)
-    image_size = image.shape[0] * image.shape[1] * 3 // 8
+    if image.mode == "RGB":
+    	n = 3
+    elif image.mode == "RGBA":
+    	n = 4
 
+    total_pixels = image.size[0]*image.size[1]*n//8
+  
     binary_secret_data=data_encryption()
     binary_secret_data_size = len(binary_secret_data)
+
+    print(f'[ INFO ]\tAvaliable size : {total_pixels}\n[ INFO ]\tPayload size : {binary_secret_data_size}')
     
-    if binary_secret_data_size > image_size:
+    if binary_secret_data_size > total_pixels:
         raise ValueError("[ {Red}ERROR{reset} ] Insufficient bytes, need bigger image or less data.")
 
     data_index = 0
-    for row in image:
+    for row in handle_img:
         for pixel in row: #type(pixel)=<class 'numpy.ndarray'>
             # convert RGB values to binary format
             r, g, b = to_bin(pixel)
@@ -131,8 +136,12 @@ def image_encode():
                 data_index += 1
             if data_index >= binary_secret_data_size:
                 break
+    width,height = image.size
+    array = handle_img.reshape(width,height,n)
 
-    cv2.imwrite(output_image,image)
+    enc_img = Image.fromarray(array.astype('uint8'), image.mode)
+    enc_img.save(output_image,'png')
+    image.close()
     print(f"[ {Green}RESULT{reset} ] Saved encoded image      : {output_image}\n")
 
 def image_decode():
@@ -158,9 +167,12 @@ def image_decode():
 
 def data_decryption(image_name):
     print(f"[ {Green}RESULT{reset} ] Decoding image to retrieve the encrypted data.Please wait.")
-    image = cv2.imread(image_name)
+    image = Image.open(image_name)
+
+    handle_img = np.array(image)
+
     binary_data = ""
-    for row in image:
+    for row in handle_img:
         for pixel in row:
             r, g, b = to_bin(pixel)
             binary_data += r[-1]
